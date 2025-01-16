@@ -1,8 +1,44 @@
-const { test, describe } = require('node:test')
+const { test, describe, after, beforeEach } = require('node:test')
 const assert = require('node:assert')
+const supertest = require('supertest')
+const app = require('../app')
 const listHelper = require('../utils/list_helper')
+const mongoose = require('mongoose')
+const Blog = require('../models/blog')
 
+const api = supertest(app)
 
+beforeEach(async () => {
+  await Blog.deleteMany({})
+  let bl1 = new Blog({ title: 'Something', author: 'gugu', url: 'huhu', likes: 1000})
+  await bl1.save()
+  let bl2 = new Blog({ title: 'Nothing', author: 'gaga', url: 'haha', likes: 1})
+  await bl2.save()
+})
+
+test('notes are returned as json', async() => {
+  await api
+    .get('/api/blogs')
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+})
+
+test('a valid blog can be added', async () => {
+  const newBlog = {title: 'anything', author: 'gigi', url: 'hihi', likes: 96}
+
+  const initialBlogs = await Blog.find({})
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  const blogsAtEnd = await Blog.find({}) 
+  assert.strictEqual(blogsAtEnd.length, initialBlogs.length + 1)
+  const titles = blogsAtEnd.map(n => n.title)
+  assert(titles.includes(newBlog.title))
+})
 
 test('dummy returns one', () => {
   const blogs = []
@@ -90,4 +126,8 @@ describe('total likes', () => {
     const result = listHelper.totalLikes(blogs)
     assert.strictEqual(result, 36)
   })
+})
+
+after(async () => {
+  await mongoose.connection.close()
 })
