@@ -40,6 +40,48 @@ test('a valid blog can be added', async () => {
   assert(titles.includes(newBlog.title))
 })
 
+
+test('a blog can be deleted', async () => {
+  const initialBlogs = await Blog.find({})
+  const blogToDelete = initialBlogs[0]
+
+  await api
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .expect(204)
+  
+  const blogsAtEnd = await Blog.find({}) 
+
+  const titles = blogsAtEnd.map(n => n.title)
+  assert(!titles.includes(blogToDelete.title))
+
+  assert.strictEqual(blogsAtEnd.length, initialBlogs.length - 1)
+})
+
+test('updatable', async () => {
+  const initialBlogs = await Blog.find({})
+  const blogToUpd =  initialBlogs[0]
+  const blogUpd = { likes: blogToUpd.likes + 1 }
+
+  const response = await api
+    .put(`/api/blogs/${blogToUpd.id}`)
+    .send(blogUpd)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(response.body.likes, blogUpd.likes)
+  
+  const blogsAtEnd = await Blog.find({}) 
+
+  const updBlog1 = blogsAtEnd.find(n => n.id === blogToUpd.id)
+  
+  assert.strictEqual(updBlog1.likes, blogUpd.likes)
+
+  assert.strictEqual(blogsAtEnd.length, initialBlogs.length)
+})
+
+
+
+
 test('dummy returns one', () => {
   const blogs = []
 
