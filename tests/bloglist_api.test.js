@@ -5,6 +5,8 @@ const app = require('../app')
 const listHelper = require('../utils/list_helper')
 const mongoose = require('mongoose')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
@@ -169,6 +171,7 @@ describe('total likes', () => {
     assert.strictEqual(result, 36)
   })
 })
+
 
 after(async () => {
   await mongoose.connection.close()
